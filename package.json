@@ -1,0 +1,24 @@
+{
+  "name": "rethinkdb_tutorial",
+  "version": "1.0.0",
+  "description": "A brief tutorial on RethinkDB and Socket.io",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://chris-cates@github.com/Chris-Cates/RethinkDB_Node_Tutorial.git"
+  },
+  "keywords": [
+    "RethinkDB",
+    "Node",
+    "Socket.io"
+  ],
+  "author": "Chris Cates",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Chris-Cates/RethinkDB_Node_Tutorial/issues"
+  },
+  "homepage": "https://github.com/Chris-Cates/RethinkDB_Node_Tutorial#readme"
+}

@@ -40,9 +40,9 @@ this will be relatively simple:
 First we require express - `var express = require('express')` the problem with just express is that it's only RESTful and not realtime.
 Don't worry, this is why we're going to chain `socket.io` to express so socket.io will listen on the same port as express. This makes life simpler for managing ports.
 In order to do this we need to write the following:
-`var app = express();
-var server = require('http').createServer(app);
-var io = require('socket.io')(server);`
+`var app = express();`
+`var server = require('http').createServer(app);`
+`var io = require('socket.io')(server);`
 
 Also we need the rethinkdb driver included:
 `r = require('rethinkdb')`

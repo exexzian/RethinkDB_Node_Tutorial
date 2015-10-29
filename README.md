@@ -59,12 +59,14 @@ As you can see, if we use the vanilla http server package, chain express to it, 
 ### 2) Chaining RethinkDB to Express
 A handy trick you might like, is that I chain RethinkDB to the Express request parameter. It's quite simple really. You have to make use of the `express.use()` parameter.
 A simple way of doing this is writing the following: <br>
-    app.use(function(req,res,next) {
-      r.connect({
-        host: 'localhost', port: 28015
-      }).then(function(conn) {
-        req.r = r;
-        req.conn = conn;
-        next();
-      });
-    })
+<pre><code>
+  app.use(function(req,res,next) {
+    r.connect({
+      host: 'localhost', port: 28015
+    }).then(function(conn) {
+      req.r = r;
+      req.conn = conn;
+      next();
+    });
+  })
+</code></pre>

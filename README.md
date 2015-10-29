@@ -11,12 +11,19 @@
 - then run `node /path/to/your/node/file.js`
 
 ### If you're trying to run this project
-- Install rethinkdb via homebre `brew install rethinkdb`
+- Install rethinkdb via homebrew `brew install rethinkdb`
 - run `rethinkdb`
 - run `npm install`
 - run `node app.js`
 
 *Special Note - If you are on Windows, you will need to run RethinkDB in a Nitrous.io container.*
+
+### If you're trying to run this project on Nitrous.io
+- First setup RethinkDB: https://community.nitrous.io/tutorials/setting-up-rethinkdb-on-nitrous
+- Then run `git clone https://github.com/Chris-Cates/RethinkDB_Node_Tutorial.git` in the Nitrous command line (it's at the bottom after opening the ide for the container)
+- Then run `cd RethinkDB_Node_Tutorial`
+- Then finally run `node app.js`
+
 
 ## Continuing on, let's explain each package
 
@@ -50,4 +57,14 @@ Also we need the rethinkdb driver included:
 As you can see, if we use the vanilla http server package, chain express to it, then chain socket.io to it, we can have socket.io and express listening to the same ports.
 
 ### 2) Chaining RethinkDB to Express
-A handy trick you might like, is that I chain RethinkDB to the Express request parameter. It's quite simple really.
+A handy trick you might like, is that I chain RethinkDB to the Express request parameter. It's quite simple really. You have to make use of the `express.use()` parameter.
+A simple way of doing this is writing the following: <br>
+`app.use(function(req,res,next) {
+  r.connect({
+    host: 'localhost', port: 28015
+  }).then(function(conn) {
+    req.r = r;
+    req.conn = conn;
+    next();
+  });
+})`

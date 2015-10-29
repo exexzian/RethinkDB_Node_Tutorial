@@ -70,3 +70,39 @@ A simple way of doing this is writing the following: <br>
     });
   })
 </code></pre>
+Make sure you always CLOSE the connection after doing all your Express magic. Simply add this after your Express requests:<br>
+<pre><code>
+app.use(function(req,res,next) {
+  if (req.conn) {
+    req.conn.close();
+    next();
+  }
+})
+</code></pre>
+
+### 3) Setting up your HTML file
+Setting up the HTML file is super simple all we need to do is include socket.io and jquery
+<pre><code>
+<script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+</code></pre>
+Then we initialize socket.io on the client side
+<pre><code>
+socket = io.connect();
+</code></pre>
+Now we can start emitting events to the server (as well as start recieving them).<br>
+By default there is a connection event on the server and a connected event on the client.<br>
+#### On the server:
+<pre><code>
+io.sockets.on('connection', function(socket) {
+  console.log('Connected new client');
+})
+</code></pre>
+#### On the client:
+<pre><code>
+socket.on('connect', function(data) {
+  console.log('Connected');
+});
+</code></pre>
+
+### 4) Generating database and tables on the fly on RethinkDB

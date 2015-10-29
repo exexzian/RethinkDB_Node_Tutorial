@@ -14,3 +14,19 @@ app.use(function(req,res,next) {
     next();
   });
 });
+
+//Render index.html on unused routes
+app.get('*', function(request, result) {
+  result.sendFile(path.join(__dirname + '/index.html'));
+});
+
+//Then close the RethinkDB Express chain
+app.use(function(req,res,next) {
+  if (req.conn) {
+    req.conn.close();
+    next();
+  }
+});
+
+//Listen on Port 3000 finally
+app.listen(3000);

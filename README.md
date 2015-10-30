@@ -204,23 +204,23 @@ This is where the real magic happens :).<br>
 First thing we want to do is listen for all the changes in socket.io
 
 <pre><code>
-io.sockets.on('connection', function(socket) {
-  console.log('Connected new client');
-  //We use the ultra handy "changes" method in RethinkDB to emit new messages.
-  r.connect(rConfig).then(function(conn) {
-    r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
-      if (err) throw err;
-      cursor.each(function(err,cursorRes) {
-        io.emit('new_message', cursorRes);
-      })
-    })
+var conn;
+r.connect(rConfig).then(function(c) {
+  conn = c;
+}).finally(function() {
+  r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
+    if (err) throw err;
+    cursor.each(function(err,cursorRes) {
+      io.emit('new_message', cursorRes);
+    });
   })
 })
 </code></pre>
 
-First we need to do is connect the client to the server with `io.sockets.on('connection')` and then we use the `changes()` function to run a continous stream to the data.<br>
+First we need to do is connect to rethinkDB with `r.connect(rConfig)` and then we use the `changes()` function to run a continous stream to the data.<br>
 Everytime a new message is emitted we emit it in socket.io via `io.emit('new_message', cursorRes)`. Also note that the `change()` feed uses `.each()` to convert data into JSON,
-not `toArray()`.
+not `toArray()`. <br>
+Note that we iterate conn outside of the scope of `r.connect` so we can close in it in the `.finally()` function
 
 #### On the client side
 Now on the client side, we want to inject HTML into the messages container:

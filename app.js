@@ -52,14 +52,17 @@ r.connect(rConfig).then(function(conn) {
 //Connect new Socket.io client
 io.sockets.on('connection', function(socket) {
   console.log('Connected new client');
-  //We use the ultra handy "changes" method in RethinkDB to emit new messages.
-  r.connect(rConfig).then(function(conn) {
-    r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
-      if (err) throw err;
-      cursor.each(function(err,cursorRes) {
-        io.emit('new_message', cursorRes);
-      })
-    })
+});
+//We use the ultra handy "changes" method in RethinkDB to emit new messages.
+var conn;
+r.connect(rConfig).then(function(c) {
+  conn = c;
+}).finally(function() {
+  r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
+    if (err) throw err;
+    cursor.each(function(err,cursorRes) {
+      io.emit('new_message', cursorRes);
+    });
   })
 })
 

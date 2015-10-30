@@ -22,6 +22,7 @@
 - First setup RethinkDB: https://community.nitrous.io/tutorials/setting-up-rethinkdb-on-nitrous
 - Then run `git clone https://github.com/Chris-Cates/RethinkDB_Node_Tutorial.git` in the Nitrous command line (it's at the bottom after opening the ide for the container)
 - Then run `cd RethinkDB_Node_Tutorial`
+- Then run `npm install`
 - Then finally run `node app.js`
 
 

@@ -1,8 +1,11 @@
-# RethinkDB, Node, Socket.io, Express Tutorial
-## By Chris Cates
+# A Simple chat app in RethinkDB
+### By Chris Cates
 
-## Before you begin, there's a few things you need to do
+### What you will be learning:
+In this tutorial you will be learning how to create a basic chat application utilizing RethinkDB's `.changes()` function. You will also be learning
+how to create a database and table for RethinkDB elegantly with `async.js` and how to create basic `GET` and `POST` requests in Express coupled with RethinkDB.
 
+## Setting up the project:
 ### If you're starting a new project
 - Install rethinkdb via homebrew `brew install rethinkdb`
 - run `rethinkdb` or run it as a service.
@@ -16,50 +19,39 @@
 - run `npm install`
 - run `node app.js`
 
-*Special Note - If you are on Windows, you will need to run RethinkDB in a Nitrous.io container.*
-
 ### If you're trying to run this project on Nitrous.io
+- Setup a node.js container
 - First setup RethinkDB: https://community.nitrous.io/tutorials/setting-up-rethinkdb-on-nitrous
 - Then run `git clone https://github.com/Chris-Cates/RethinkDB_Node_Tutorial.git` in the Nitrous command line (it's at the bottom after opening the ide for the container)
 - Then run `cd RethinkDB_Node_Tutorial`
 - Then run `npm install`
 - Then finally run `node app.js`
 
-
-## Continuing on, let's explain each package
-
-### The Rethinkdb package
-- This is used as a driver to communicate with the RethinkDB server
-- It provides the ReQL interface in Node.js syntax
-
-### The Socket.io package
-- This is coupled with a front end library for emitting and recieving socket events.
-- Used for real time communication with the RethinkDB server
-
-### The Express library
-- While http server would've sufficed, I would still like to show a handy pattern to chain Express to Socket.io seamlessly
-- I also would like to show you can seamlessly chain RethinkDB to express, and, safely close the connection on each RESTful request
-- A fully statless RESTful API routing system
-
 ## Understanding the code
-### 1) Creating the socket.io server
-Typically, the first few lines of code are settings up the main project's dependencies, since we are only using three packages,
-this will be relatively simple:
+### 1) Creating the Socket.io and Express server
+#### What we need to do:
 First we require express - `var express = require('express')` the problem with just express is that it's only RESTful and not realtime.
 Don't worry, this is why we're going to chain `socket.io` to express so socket.io will listen on the same port as express. This makes life simpler for managing ports.
 In order to do this we need to write the following:<br>
 `var app = express();`<br>
 `var server = require('http').createServer(app);`<br>
 `var io = require('socket.io')(server);`
+#### What is the socket.io package?
+- A real time communication library for server's and client's.
+- Will be used with the RethinkDB server to emit and recieve socket events.
+#### What is the Express package?
+- Express is a fully RESTful routing system
+- Will be used with the RethinkDB server to `GET` and `POST` data.
 
 Also we need the rethinkdb driver included:
 `r = require('rethinkdb')`
-
-As you can see, if we use the vanilla http server package, chain express to it, then chain socket.io to it, we can have socket.io and express listening to the same ports.
+#### What is `r` exactly?
+- `r` is the RethinkDB driver that is included by `r = require('rethinkdb')`
+- It communicates with the RethinkDB database with the ReQL API.
 
 ### 2) Chaining RethinkDB to Express
-A handy trick you might like, is that I chain RethinkDB to the Express request parameter. It's quite simple really. You have to make use of the `express.use()` parameter.
-A simple way of doing this is writing the following: <br>
+A handy trick you might like, is chaining RethinkDB to the Express request parameter. It's quite simple really. You have to make use of the `express.use()` parameter.
+#### Opening the connection
 <pre><code>
   app.use(function(req,res,next) {
     r.connect({
@@ -71,7 +63,7 @@ A simple way of doing this is writing the following: <br>
     });
   })
 </code></pre>
-Make sure you always CLOSE the connection after doing all your Express magic. Simply add this after your Express requests:<br>
+#### Closing the connection
 <pre><code>
 app.use(function(req,res,next) {
   if (req.conn) {
@@ -80,10 +72,12 @@ app.use(function(req,res,next) {
   }
 })
 </code></pre>
+Make sure you always CLOSE the connection after doing all your Express magic. Simply add this after your Express requests:<br>
+*Note: you MUST close the RethinkDB connection before serving HTML files!!!*
 
 ### 3) Setting up your HTML file
-Setting up the HTML file is super simple all we need to do is include socket.io and jquery.<br>
-Then we initialize socket.io on the client side
+In the HTML file we will include socket.io and jquery. In this demo, we included it via a CDN.<br>
+Then we initialize socket.io on the client side.
 <pre><code>
 socket = io.connect();
 </code></pre>
@@ -101,11 +95,12 @@ socket.on('connect', function(data) {
   console.log('Connected');
 });
 </code></pre>
+We will touch on this subject more later. But for now, we need to create database and tables in RethinkDB.
 
 ### 4) Generating database and tables on the fly on RethinkDB
 Generally, you want to automatically generate the database and tables for your app automatically, this way, new developers don't have to worry about managing stuff through the web client.
 We'll add something to the beginning of the app.js file which will automatically generate the database and tables on the fly.<br>
-Please note we are using the async.js library. This helps make aysnchronous programming elegant, and, prevent nesting functions (callback hell perse). You can read up and learn about it here: https://github.com/caolan/async
+Please note we are using the async.js library. This helps make aysnchronous programming elegant, and, prevent heavily nested functions (callback hell perse). You can read up and learn about it here: https://github.com/caolan/async
 
 <pre><code>
 r.connect(rConfig).then(function(conn) {
@@ -146,7 +141,7 @@ r.connect(rConfig).then(function(conn) {
 </code></pre>
 
 This may seem like a lot for just generating a database and table, but, we are running the script asynchronously in series, creating the database first, and then the table.<br>
-Some notes to keep in mind, is that you can run `.contains()` on `.tableList()` or `.dbList()` and it'll return true or false on callback based on what you make of it. <br>
+Some notes to keep in mind, is that you can run `.contains()` on `.tableList()` or `.dbList()` and it'll return true or false on callback based on whether the database or table was created. <br>
 Alternatively, you don't have to write `.dbCreate('rethinkdb_tutorial')` you can easily write `.db('rethinkdb_tutorial').dbCreate()` as well.<br>
 This applies to `.tableCreate('messages')` except `.table('messages').tableCreate()` you can choose what you prefer best in the future. <br>
 Also you need to create an index for `date` this is so that we can order messages ascending by `date`.
@@ -155,7 +150,7 @@ Also you need to create an index for `date` this is so that we can order message
 This is actually one of the easier steps. And all you need to do is create a `POST` and `GET` request. If you're familiar with Express, this will be a breeze, especially since we chained
 RethinkDB to Express already.<br>
 
-First things first, you want to an AJAX form in your HTML.<br>
+First, you want to an AJAX form in your HTML.<br>
 For now we'll use jQuery for handling AJAX calls, since it's simple and easy.
 
 <pre><code>
@@ -168,6 +163,7 @@ $('.message-submit').click(function() {
 </code></pre>
 
 We'll also add a `POST` request in Express to send data and insert into RethinkDB. It's super simple:
+
 <pre><code>
 app.post('/message', function(req,res,next) {
   req.r.db('rethinkdb_tutorial').table('messages').insert({
@@ -179,9 +175,10 @@ app.post('/message', function(req,res,next) {
   })
 });
 </code></pre>
+
 It's pretty self explanatory, all we need to do is `.insert()` the message (which was sent via JSON) and add the current date as a timestamp for the message.<br>
-Note that after the insert completes, we do `res.send("Message sent!");` to ensure that the message is sent.<br>
-Moving on let's do a `GET` request in Express to get all the pre-existing messages in RethinkDB. Once again simple:
+Note that after the insert completes, we do `res.send("Message sent!");` to send to the client that the message was sent.<br>
+Moving on let's do a `GET` request in Express to get all the pre-existing messages in RethinkDB.
 <pre><code>
 app.get('/message', function(req,res,next) {
   req.r.db('rethinkdb_tutorial').table('messages').orderBy({index: req.r.desc('date')})
@@ -193,13 +190,11 @@ app.get('/message', function(req,res,next) {
   });
 })
 </code></pre>
-This time around we are ordering all the messages by the date. Note that we made an index previously in our DB generating script to make sure the script runs faster on large datasets.
+This time around we are ordering all the messages by the date. Note that we made an index previously in our DB generating script to make sure the script can order by the secondary index date.
 RethinkDB returns a cursor upon recieving data. All we need to do is run `toArray()` on it, and, we can extract the data in easy to read JSON. <br>
 We finally send the data via `res.send(cursorRes)`.
 
 ### 6) Making it realtime with .changes() and socket.io
-This is where the real magic happens :).<br>
-
 #### On the server
 First thing we want to do is listen for all the changes in socket.io
 
@@ -217,7 +212,7 @@ r.connect(rConfig).then(function(c) {
 })
 </code></pre>
 
-First we need to do is connect to rethinkDB with `r.connect(rConfig)` and then we use the `changes()` function to run a continous stream to the data.<br>
+First we connect to rethinkDB with `r.connect(rConfig)` and then we use the `changes()` function to run a continous stream to the data.<br>
 Everytime a new message is emitted we emit it in socket.io via `io.emit('new_message', cursorRes)`. Also note that the `change()` feed uses `.each()` to convert data into JSON,
 not `toArray()`. <br>
 Note that we iterate conn outside of the scope of `r.connect` so we can close in it in the `.finally()` function

@@ -165,3 +165,84 @@ $('.message-submit').click(function() {
   });
 });
 </code></pre>
+
+We'll also add a `POST` request in Express to send data and insert into RethinkDB. It's super simple:
+<pre><code>
+app.post('/message', function(req,res,next) {
+  req.r.db('rethinkdb_tutorial').table('messages').insert({
+    message: req.body.message,
+    date: new Date()
+  }).run(req.conn, function(err,rRes) {
+    if (err) throw err;
+    res.send("Message sent!");
+  })
+});
+</code></pre>
+It's pretty self explanatory, all we need to do is `.insert()` the message (which was sent via JSON) and add the current date as a timestamp for the message.<br>
+Note that after the insert completes, we do `res.send("Message sent!");` to ensure that the message is sent.<br>
+Moving on let's do a `GET` request in Express to get all the pre-existing messages in RethinkDB. Once again simple:
+<pre><code>
+app.get('/message', function(req,res,next) {
+  req.r.db('rethinkdb_tutorial').table('messages').orderBy({index: req.r.desc('date')})
+  .run(req.conn, function(err,cursor) {
+    cursor.toArray(function(err,cursorRes) {
+      if (err) throw err;
+      res.send(cursorRes);
+    });
+  });
+})
+</code></pre>
+This time around we are ordering all the messages by the date. Note that we made an index previously in our DB generating script to make sure the script runs faster on large datasets.
+RethinkDB returns a cursor upon recieving data. All we need to do is run `toArray()` on it, and, we can extract the data in easy to read JSON. <br>
+We finally send the data via `res.send(cursorRes)`.
+
+### 6) Making it realtime with .changes() and socket.io
+This is where the real magic happens :).<br>
+
+#### On the server
+First thing we want to do is listen for all the changes in socket.io
+
+<pre><code>
+io.sockets.on('connection', function(socket) {
+  console.log('Connected new client');
+  //We use the ultra handy "changes" method in RethinkDB to emit new messages.
+  r.connect(rConfig).then(function(conn) {
+    r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
+      if (err) throw err;
+      cursor.each(function(err,cursorRes) {
+        io.emit('new_message', cursorRes);
+      })
+    })
+  })
+})
+</code></pre>
+
+First we need to do is connect the client to the server with `io.sockets.on('connection')` and then we use the `changes()` function to run a continous stream to the data.<br>
+Everytime a new message is emitted we emit it in socket.io via `io.emit('new_message', cursorRes)`. Also note that the `change()` feed uses `.each()` to convert data into JSON,
+not `toArray()`.
+
+#### On the client side
+Now on the client side, we want to inject HTML into the messages container:
+<pre><code>
+socket.on('new_message', function(res) {
+  console.log(res);
+  var obj = $('#' + res.new_val.id);
+  if (obj.length == 0) {
+    $('.messages').prepend("<div id='"+ res.new_val.id +"'>" + res.new_val.message + " sent on " + res.new_val.date + "</div>");
+  } else {
+    //Do nothing
+  }
+})
+</code></pre>
+Typically I would prefer to use React to solve the problem, since it's more elegant, but, for demonstration purposes. We will use just plain jQuery and inject HTML like this.
+It's quite simple really. Once you connect socket.io on the client side by doing `socket = io.connect()` you can start sending and recieving messages.
+All you have to do is recieve messages by `socket.on('name_of_event', function(result) { ... })` As you can see in the sample code. We take the array from the `.change()` feed
+and convert it into readable HTML.
+
+
+### Conclusion
+You should be well equipped for your future projects. And now you can make real time apps in a breeze in Node.js! I highly reccomend using React to mutate the DOM as opposed to
+just plain jQuery. And I also reccomend Redux for storing and mapping data in an elegant way.<br><br>
+
+If you have any questions. Feel free to email me at codeviolet@chriscates.ca<br>
+Cheers, Chris

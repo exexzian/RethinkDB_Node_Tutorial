@@ -3,28 +3,34 @@
   <head>
     <title>RethinkDB / Node.js / Socket.io Tutorial</title>
     <!-- Include the Socket.io Client Script -->
-    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script src="http://cdn.socket.io/socket.io-1.3.7.js"></script>
     <script>socket = io.connect();</script>
     <!-- jQuery for simplicities sake -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
     <script>
     //Because we chained socket.io to express:
     //It listens on the same port. So we don't have to specify a URL for socket.io
     socket.on('connect', function(res) {
       console.log('Socket.io is ready!');
     });
+    //For testing purposes. We are only going to add messages to the list.
     socket.on('new_message', function(res) {
       console.log(res);
+      var obj = $('#' + res.new_val.id);
+      if (obj.length == 0) {
+        $('.messages').prepend("<div id='"+ res.new_val.id +"'>" + res.new_val.message + " sent on " + res.new_val.date + "</div>");
+      } else {
+        //Do nothing
+      }
     })
     $(document).ready(function() {
       //Get all the pre-existing messages
       $.get('/message', function(data) {
         //Map the data to messages. I normally use React, but for this tutorial we'll inject HTML like this.
-        var html = "<ul>";
+        html = "";
         data.map(function(message) {
-          html += "<li>" + message.message + " sent on " + message.date + "</li>";
+          html += "<div id='"+ message.id +"'>" + message.message + " sent on " + message.date + "</div>";
         })
-        html += "</ul>";
         $('.messages').html(html);
       });
 
@@ -34,6 +40,7 @@
         $.post('/message', {'message': message}, function(data) {
           console.log(data);
           $('.message-input').val('');
+          socket.emit('new_message', 'Sent Message!');
         });
       });
     });

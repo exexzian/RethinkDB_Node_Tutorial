@@ -52,22 +52,16 @@ r.connect(rConfig).then(function(conn) {
 //Connect new Socket.io client
 io.sockets.on('connection', function(socket) {
   console.log('Connected new client');
-  /*
-  socket.on('new_message', function(data) {
-    r.connect(rConfig).then(function(conn) {
-      r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
-        if (err) throw err;
-        cursor.toArray(function(err,cursorRes) {
-          socket.emit('new_message', cursorRes);
-        })
+  //We use the ultra handy "changes" method in RethinkDB to emit new messages.
+  r.connect(rConfig).then(function(conn) {
+    r.db('rethinkdb_tutorial').table('messages').changes().run(conn, function(err, cursor) {
+      if (err) throw err;
+      cursor.each(function(err,cursorRes) {
+        io.emit('new_message', cursorRes);
       })
     })
   })
-  */
 })
-
-// serve static files from current directory
-app.use(express.static('./'));
 
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
@@ -87,6 +81,7 @@ app.post('/message', function(req,res,next) {
     message: req.body.message,
     date: new Date()
   }).run(req.conn, function(err,rRes) {
+    if (err) throw err;
     res.send("Message sent!");
   })
 });
@@ -117,5 +112,5 @@ app.get('*', function(request, result) {
 
 
 //Listen on Port 3000 finally
-app.listen(4000);
-console.log("App running on port 4000")
+server.listen(3000);
+console.log("App running on port 3000")

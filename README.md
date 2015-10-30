@@ -35,16 +35,19 @@ Don't worry, this is why we're going to chain `socket.io` to express so socket.i
 In order to do this we need to write the following:<br>
 `var app = express();`<br>
 `var server = require('http').createServer(app);`<br>
-`var io = require('socket.io')(server);`
+`var io = require('socket.io')(server);`<br>
+
 #### What is the socket.io package?
 - A real time communication library for server's and client's.
 - Will be used with the RethinkDB server to emit and recieve socket events.
+
 #### What is the Express package?
 - Express is a fully RESTful routing system
 - Will be used with the RethinkDB server to `GET` and `POST` data.
 
 Also we need the rethinkdb driver included:
 `r = require('rethinkdb')`
+
 #### What is `r` exactly?
 - `r` is the RethinkDB driver that is included by `r = require('rethinkdb')`
 - It communicates with the RethinkDB database with the ReQL API.

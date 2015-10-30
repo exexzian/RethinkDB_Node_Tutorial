@@ -1,23 +1,50 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-    <title>RethinkDB / Node.js/ Socket.io Tutorial</title>
+    <title>RethinkDB / Node.js / Socket.io Tutorial</title>
     <!-- Include the Socket.io Client Script -->
     <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script>socket = io.connect();</script>
     <!-- jQuery for simplicities sake -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
     <script>
     //Because we chained socket.io to express:
     //It listens on the same port. So we don't have to specify a URL for socket.io
-    socket = io.connect();
-
     socket.on('connect', function(res) {
       console.log('Socket.io is ready!');
+    });
+    socket.on('new_message', function(res) {
+      console.log(res);
     })
-
     $(document).ready(function() {
+      //Get all the pre-existing messages
+      $.get('/message', function(data) {
+        //Map the data to messages. I normally use React, but for this tutorial we'll inject HTML like this.
+        var html = "<ul>";
+        data.map(function(message) {
+          html += "<li>" + message.message + " sent on " + message.date + "</li>";
+        })
+        html += "</ul>";
+        $('.messages').html(html);
+      });
 
+      //We need to post to the desired route to send the message:
+      $('.message-submit').click(function() {
+        var message = $('.message-input').val();
+        $.post('/message', {'message': message}, function(data) {
+          console.log(data);
+          $('.message-input').val('');
+        });
+      });
     });
     </script>
   </head>
+  <body>
+    <h1>Add a message:</h1>
+    <input type="text" class="message-input" placeholder="Type a message..."/>
+    <button class="message-submit">Submit</button>
+    <div class="messages">
+
+    </div>
+  </body>
 </html>

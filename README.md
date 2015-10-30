@@ -104,15 +104,17 @@ socket.on('connect', function(data) {
 ### 4) Generating database and tables on the fly on RethinkDB
 Generally, you want to automatically generate the database and tables for your app automatically, this way, new developers don't have to worry about managing stuff through the web client.
 We'll add something to the beginning of the app.js file which will automatically generate the database and tables on the fly.<br>
-Please note we are using the async.js library. This helps make aysnchronous programming elegant, and, prevent nesting function. You can read up and learn about it here: https://github.com/caolan/async
+Please note we are using the async.js library. This helps make aysnchronous programming elegant, and, prevent nesting functions (callback hell perse). You can read up and learn about it here: https://github.com/caolan/async
 
 <pre><code>
 r.connect(rConfig).then(function(conn) {
   async.series([
     function(finished) {
       r.dbList().contains('rethinkdb_tutorial').run(conn, function(err,res) {
+        if (err) throw err;
         if(res == false) {
           r.dbCreate('rethinkdb_tutorial').run(conn, function(err,res) {
+            if (err) throw err;
             finished();
           });
         } else {
@@ -122,9 +124,14 @@ r.connect(rConfig).then(function(conn) {
     },
     function(finished) {
       r.db('rethinkdb_tutorial').tableList().contains('messages').run(conn, function(err,res) {
+        if (err) throw err;
         if(res == false) {
           r.db('rethinkdb_tutorial').tableCreate('messages').run(conn, function(err,res) {
-            finished();
+            if (err) throw err;
+            r.db('rethinkdb_tutorial').table('messages').indexCreate('date').run(conn, function(err,res) {
+              if (err) throw err;
+              finished();
+            });
           });
         } else {
           finished();
@@ -140,7 +147,21 @@ r.connect(rConfig).then(function(conn) {
 This may seem like a lot for just generating a database and table, but, we are running the script asynchronously in series, creating the database first, and then the table.<br>
 Some notes to keep in mind, is that you can run `.contains()` on `.tableList()` or `.dbList()` and it'll return true or false on callback based on what you make of it. <br>
 Alternatively, you don't have to write `.dbCreate('rethinkdb_tutorial')` you can easily write `.db('rethinkdb_tutorial').dbCreate()` as well.<br>
-This applies to `.tableCreate('messages')` except `.table('messages').tableCreate()` you can choose what you prefer best in the future.
+This applies to `.tableCreate('messages')` except `.table('messages').tableCreate()` you can choose what you prefer best in the future. <br>
+Also you need to create an index for `date` this is so that we can order messages ascending by `date`.
 
 ### 5) Uploading messages to the server / recieving all previous messages from the server
-This is actually one of the easier steps. And all you need to do is create a `POST` and `GET` request.
+This is actually one of the easier steps. And all you need to do is create a `POST` and `GET` request. If you're familiar with Express, this will be a breeze, especially since we chained
+RethinkDB to Express already.<br>
+
+First things first, you want to an AJAX form in your HTML.<br>
+For now we'll use jQuery for handling AJAX calls, since it's simple and easy.
+
+<pre><code>
+$('.message-submit').click(function() {
+  var message = $('.message-input').val();
+  $.post('/message', {message: message}, function(data) {
+    console.log(data);
+  });
+});
+</code></pre>
